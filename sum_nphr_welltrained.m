@@ -1,5 +1,5 @@
 %% laser-off then laser on
-cd('K:\Mapping\codes');
+cd('K:\Mapping\mapping');
 %% list regions
 rootpath='K:\Mapping\mapping effect size NpHR (virus)';
 folders=dir(rootpath);
@@ -21,7 +21,7 @@ for i=1:length(folders)
         all_branches=vertcat(all_branches,one_branch_ED,one_branch_LD,one_branch_DM);
     end    
 end
-cd('K:\Mapping\codes');
+cd('K:\Mapping\mapping');
 save('nphr_perf.mat','all_branches');
 
 

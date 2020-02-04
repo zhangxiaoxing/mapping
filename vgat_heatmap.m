@@ -1,7 +1,9 @@
-load('WT_LN.mat','wtRows','wtRowsHitMiss','wtRowsCRFalse');
+
+cd('K:\Mapping\mapping')
+
+load('vgat_WT_LN.mat','wtRows','lnRows','wtRowsHitMiss','wtRowsCRFalse');
 load('vgatLUT.mat','vgatLUT')
 %% WT
-
 
 for i=1:size(wtRows,1)
     if ~isempty(wtRows{i,8})
@@ -61,14 +63,14 @@ wtRows=translateName(wtRows,vgatLUT);
 regions=unique(wtRows(:,2));
 tasks=unique(wtRows(:,1));
 parts=unique(wtRows(:,5));
-heatMat=cell(0);
+vgat_heat_mat=cell(0);
 tRowIdx=2;
 skipped=false;
 for tIdx=1:length(tasks)
     for pIdx=1:length(parts)
         for rIdx=1:length(regions)
             if tRowIdx==2
-                heatMat{1,rIdx+1}=regions{rIdx};
+                vgat_heat_mat{1,rIdx+1}=regions{rIdx};
             end
             %%%%%col 5
 %             if contains(tasks(tIdx),'DualTask-learning-day3-catch') && pIdx==2 && rIdx==1
@@ -78,45 +80,45 @@ for tIdx=1:length(tasks)
                 & strcmp(wtRows(:,2),regions(rIdx))...
                 & strcmp(wtRows(:,5),parts(pIdx)),6:7));
             if isempty(perfT) || all(isnan(perfT(:)))
-                 heatMat{tRowIdx,rIdx+1}=[];
+                 vgat_heat_mat{tRowIdx,rIdx+1}=[];
             else
                 skipped=false;
                 eff=cohensD(perfT(:,1),perfT(:,2));%% laser-on minus laser off
-                heatMat{tRowIdx,1}=sprintf('%s_%s',parts{pIdx},tasks{tIdx});
-                heatMat{tRowIdx,rIdx+1}=eff;
+                vgat_heat_mat{tRowIdx,1}=sprintf('%s_%s',parts{pIdx},tasks{tIdx});
+                vgat_heat_mat{tRowIdx,rIdx+1}=eff;
             end
         end
-        if ~skipped && any(cellfun(@(x) ~isempty(x) && ~isnan(x),heatMat(tRowIdx,2:end)))
+        if ~skipped && any(cellfun(@(x) ~isempty(x) && ~isnan(x),vgat_heat_mat(tRowIdx,2:end)))
             tRowIdx=tRowIdx+1;
         end
     end
 end
 
 
-if ~any(cellfun(@(x) ~isempty(x) && ~isnan(x),heatMat(end,2:end)))
-    heatMat(end,:)=[];
+if ~any(cellfun(@(x) ~isempty(x) && ~isnan(x),vgat_heat_mat(end,2:end)))
+    vgat_heat_mat(end,:)=[];
 end
 
 %% unnecessarily complex sort of tasks
-[~,simpleIdx]=sort(heatMat(2:end,1));
-heatMat(2:end,:)=heatMat(simpleIdx+1,:);
-sortIdx=1:(size(heatMat,1)-1);
-sortTags=heatMat(2:end,1);
+[~,simpleIdx]=sort(vgat_heat_mat(2:end,1));
+vgat_heat_mat(2:end,:)=vgat_heat_mat(simpleIdx+1,:);
+sortIdx=1:(size(vgat_heat_mat,1)-1);
+sortTags=vgat_heat_mat(2:end,1);
 sortIdx(~contains(sortTags,'ear'))=sortIdx(~contains(sortTags,'ear'))+1000;
 sortIdx(contains(sortTags,'DPA_S'))=sortIdx(contains(sortTags,'DPA_S'))+100;
 sortIdx(contains(sortTags,'Dual_DPA_D'))=sortIdx(contains(sortTags,'Dual_DPA_D'))+200;
 sortIdx(contains(sortTags,'Dual_DRT'))=sortIdx(contains(sortTags,'Dual_DRT'))+300;
 [~,tIdx]=sort(sortIdx);
-heatMat(2:end,:)=heatMat(tIdx+1,:);
+vgat_heat_mat(2:end,:)=vgat_heat_mat(tIdx+1,:);
 
 %%
 
 
-% heatMatBak=heatMat;
-heatMat(:, find(contains(heatMat(1,2:end),'Ctrl'))+1)=[];
-heatMat(cellfun('isempty',heatMat))={nan};
-regions=heatMat(1,2:end);
-imgMat=cell2mat(heatMat(2:end,2:end));
+% vgat_heat_matBak=vgat_heat_mat;
+vgat_heat_mat(:, find(contains(vgat_heat_mat(1,2:end),'Ctrl'))+1)=[];
+vgat_heat_mat(cellfun('isempty',vgat_heat_mat))={nan};
+regions=vgat_heat_mat(1,2:end);
+imgMat=cell2mat(vgat_heat_mat(2:end,2:end));
 % [~,rIdx]=sort(nanmean(imgMat([1:11,13,14],:)));
 [~,rIdx]=sort(imgMat(12,:));
 imgMat=imgMat(:,rIdx);
@@ -129,9 +131,9 @@ set(gca,'Color',[0.5,0.5,0.5])
 colormap('jet');
 colorbar();
 set(gca,'XTick',1:size(imgMat,2),'XTickLabel',regions(rIdx),'XTickLabelRotation',90,...
-'YTick',1:size(imgMat,1),'YTickLabel',heatMat(2:end,1),'TickLabelInterpreter','none','FontSize',14);
-
-save('heatMat.mat','heatMat');
+'YTick',1:size(imgMat,1),'YTickLabel',vgat_heat_mat(2:end,1),'TickLabelInterpreter','none','FontSize',14);
+cd('K:\Mapping\mapping')
+save('vgat_heat_mat.mat','vgat_heat_mat');
 
 function out=cohensD(cond1,cond2)
 nOpto=sum(~isnan(cond1))-1;

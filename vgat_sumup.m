@@ -1,5 +1,5 @@
 %% laser-off then laser on
-cd('K:\Mapping\codes');
+cd('K:\Mapping\mapping');
 %% list regions
 rootpath='K:\Mapping\mapping VGAT';
 folders=dir(rootpath);
@@ -180,7 +180,8 @@ for ridx=1:length(regions)
         
     end
 end
-save('WT_LN.mat','wtRows','lnRows','wtRowsHitMiss','wtRowsCRFalse');
+cd('K:\Mapping\mapping');
+save('vgat_WT_LN.mat','wtRows','lnRows','wtRowsHitMiss','wtRowsCRFalse');
 
 
 
