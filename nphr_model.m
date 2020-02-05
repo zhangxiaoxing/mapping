@@ -45,11 +45,12 @@ for t=tasks
     value_arr=vertcat(value_arr,dir_sel');
     regions{end+1}=perTask(:,1);
     [dir_sel,effIdx]=sort(dir_sel);
-    fh=figure('Color','w');
+    fh=figure('Color','w','Position',[50,50,720,480]);
     hold on;
     bar(dir_sel,'FaceColor','w','EdgeColor','k');
     set(gca(),'XTick',1:size(dir_sel),'XTickLabel',perTask(effIdx,1),'XTickLabelRotation',90)
     title([t,suffix]);
+    print(sprintf('SPEC_%s_%s',char(t),char(suffix)),'-dpng','-r300')
     %% hit and rejection scatter
     
     rejects=zeros(size(perTask,1),1);
