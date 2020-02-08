@@ -17,16 +17,18 @@ for t=tasks
     end
     value_arr=vertcat(value_arr,effSizeMean');
     [effSizeMean,effIdx]=sort(effSizeMean);
-    fh=figure('Color','w');
+    fh=figure('Color','w','Position',[50,50,720,480]);
     hold on;
     bar(effSizeMean,'FaceColor','w','EdgeColor','k');
-    errorbar(effSizeMean,effSizeSEM(effIdx),'k.','LineWidth',1);
+    errorbar(effSizeMean,effSizeSEM(effIdx),'.','LineWidth',1,'Color',[0.5,0.5,0.5]);
     effSize=effSize(effIdx);
     for i=1:length(effSize)
         plot(i,effSize{i},'b.')
     end
-    set(gca(),'XTick',1:size(perTask,1),'XTickLabel',perTask(effIdx,1),'XTickLabelRotation',90)
-    title(t);
+    set(gca(),'XTick',1:size(perTask,1),'XTickLabel',perTask(effIdx,1),'XTickLabelRotation',90);
+    ylabel('Effect size')
+    print(sprintf('EFFSIZE_%s_%s',char(t),'NPHR'),'-dpng','-r300')
+    title([t, '-NPHR']);
     %% hit and rejection scatter
     
     rejectsEffMean=zeros(size(perTask,1),1);

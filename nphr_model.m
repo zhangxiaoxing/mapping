@@ -49,6 +49,7 @@ for t=tasks
     hold on;
     bar(dir_sel,'FaceColor','w','EdgeColor','k');
     set(gca(),'XTick',1:size(dir_sel),'XTickLabel',perTask(effIdx,1),'XTickLabelRotation',90)
+    ylabel('OpGen specificity')
     title([t,suffix]);
     print(sprintf('SPEC_%s_%s',char(t),char(suffix)),'-dpng','-r300')
     %% hit and rejection scatter

@@ -64,8 +64,11 @@ regions=unique(wtRows(:,2));
 tasks=unique(wtRows(:,1));
 parts=unique(wtRows(:,5));
 vgat_heat_mat=cell(0);
+vgat_SEM=cell(0);
+vgat_individual_eff=cell(0);
 tRowIdx=2;
 skipped=false;
+
 for tIdx=1:length(tasks)
     for pIdx=1:length(parts)
         for rIdx=1:length(regions)
@@ -83,9 +86,11 @@ for tIdx=1:length(tasks)
                  vgat_heat_mat{tRowIdx,rIdx+1}=[];
             else
                 skipped=false;
-                eff=cohensD(perfT(:,1),perfT(:,2));%% laser-on minus laser off
+                [effMean,effSEM,effAll]=cohen_s_d(perfT(:,1),perfT(:,2));%% laser-on minus laser off
                 vgat_heat_mat{tRowIdx,1}=sprintf('%s_%s',parts{pIdx},tasks{tIdx});
-                vgat_heat_mat{tRowIdx,rIdx+1}=eff;
+                vgat_heat_mat{tRowIdx,rIdx+1}=effMean;
+                vgat_SEM{tRowIdx,rIdx+1}=effSEM;
+                vgat_individual_eff{tRowIdx,rIdx+1}=effAll;
             end
         end
         if ~skipped && any(cellfun(@(x) ~isempty(x) && ~isnan(x),vgat_heat_mat(tRowIdx,2:end)))
@@ -97,11 +102,17 @@ end
 
 if ~any(cellfun(@(x) ~isempty(x) && ~isnan(x),vgat_heat_mat(end,2:end)))
     vgat_heat_mat(end,:)=[];
+    vgat_SEM(end,:)=[];
+    vgat_individual_eff(end,:)=[];
 end
 
 %% unnecessarily complex sort of tasks
 [~,simpleIdx]=sort(vgat_heat_mat(2:end,1));
 vgat_heat_mat(2:end,:)=vgat_heat_mat(simpleIdx+1,:);
+vgat_SEM(2:end,:)=vgat_SEM(simpleIdx+1,:);
+vgat_individual_eff(2:end,:)=vgat_individual_eff(simpleIdx+1,:);
+
+
 sortIdx=1:(size(vgat_heat_mat,1)-1);
 sortTags=vgat_heat_mat(2:end,1);
 sortIdx(~contains(sortTags,'ear'))=sortIdx(~contains(sortTags,'ear'))+1000;
@@ -110,12 +121,13 @@ sortIdx(contains(sortTags,'Dual_DPA_D'))=sortIdx(contains(sortTags,'Dual_DPA_D')
 sortIdx(contains(sortTags,'Dual_DRT'))=sortIdx(contains(sortTags,'Dual_DRT'))+300;
 [~,tIdx]=sort(sortIdx);
 vgat_heat_mat(2:end,:)=vgat_heat_mat(tIdx+1,:);
-
+vgat_SEM(2:end,:)=vgat_SEM(tIdx+1,:);
+vgat_individual_eff(2:end,:)=vgat_individual_eff(tIdx+1,:);
 %%
 
 
 % vgat_heat_matBak=vgat_heat_mat;
-vgat_heat_mat(:, find(contains(vgat_heat_mat(1,2:end),'Ctrl'))+1)=[];
+% vgat_heat_mat(:, find(contains(vgat_heat_mat(1,2:end),'Ctrl'))+1)=[];
 vgat_heat_mat(cellfun('isempty',vgat_heat_mat))={nan};
 regions=vgat_heat_mat(1,2:end);
 imgMat=cell2mat(vgat_heat_mat(2:end,2:end));
@@ -133,12 +145,27 @@ colorbar();
 set(gca,'XTick',1:size(imgMat,2),'XTickLabel',regions(rIdx),'XTickLabelRotation',90,...
 'YTick',1:size(imgMat,1),'YTickLabel',vgat_heat_mat(2:end,1),'TickLabelInterpreter','none','FontSize',14);
 cd('K:\Mapping\mapping')
-save('vgat_heat_mat.mat','vgat_heat_mat');
+save('vgat_heat_mat.mat','vgat_heat_mat','vgat_SEM','vgat_individual_eff');
 
-function out=cohensD(cond1,cond2)
-nOpto=sum(~isnan(cond1))-1;
-stdv=sqrt((nOpto*nanvar(cond1)+nOpto*nanvar(cond2))/(2*nOpto));
-out=(nanmean(cond2)-nanmean(cond1))/stdv;
+for tId=[13,16,19]
+    col_sel=~cellfun('isempty',vgat_individual_eff(tId,2:end));
+    plotOne(cell2mat(vgat_heat_mat(tId,[false,col_sel])),...
+        cell2mat(vgat_SEM(tId,[false,col_sel])),...
+        vgat_individual_eff(tId,[false,col_sel]),...
+        vgat_heat_mat(1,[false,col_sel]),vgat_heat_mat{tId,1});
+end
+
+
+
+
+
+function [effOpto_mean,sem,effSize]=cohen_s_d(optoOff,optoOn)
+nOpto=numel(optoOff)-1;
+sOpto=sqrt((nOpto*var(optoOff)+nOpto*var(optoOn))/(2*nOpto));
+effOpto=(optoOn-optoOff)/sOpto;
+effOpto_mean=mean(effOpto);
+sem=std(effOpto)/sqrt(length(effOpto));
+effSize=effOpto;
 end
 
 
@@ -149,4 +176,24 @@ function out=translateName(wtRows,vgatLUT)
         end
     end
     out=wtRows;
+end
+
+function plotOne(effSizeMean,effSizeSEM,effSize,region_list,task)
+    if contains(task,'Simple_DPA_')
+        task=replace(task,'Simple_DPA_','');
+    end
+    [effSizeMean,effIdx]=sort(effSizeMean);
+    fh=figure('Color','w','Position',[50,50,720,480]);
+    hold on;
+    bar(effSizeMean,'FaceColor','w','EdgeColor','k');
+    errorbar(effSizeMean,effSizeSEM(effIdx),'.','LineWidth',1,'Color',[0.5,0.5,0.5]);
+    effSize=effSize(effIdx);
+    for i=1:length(effSize)
+        plot(i,effSize{i},'b.')
+    end
+    set(gca(),'XTick',1:numel(region_list),'XTickLabel',region_list(effIdx),'XTickLabelRotation',90);
+    ylabel('Effect size')
+    title([task, '-VGAT']);
+    print(sprintf('EFFSIZE_%s_%s',task,'VGAT'),'-dpng','-r300')
+    
 end
