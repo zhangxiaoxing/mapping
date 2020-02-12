@@ -1,32 +1,26 @@
-use_eff=true;
+use_eff=false;
 path='K:\code\tca\Batch30B\tca_su_factors.csv';
-tca_coeff=importdata(path,',',0);
-load('vgatLUT.mat')
+features=importdata(path,',',0);
+load('opgene_ephys_corr.mat','translate')
 if use_eff
-    load('vgat_heat_mat.mat')
-    vgat_arr=cell2mat(vgat_heat_mat(13:21,2:end));
-    vgat_regions=vgat_heat_mat(1,2:end);
-    value_labels=vgat_heat_mat(13:21,1);
+    load('nphr_mat.mat','value_arr','value_labels','region_list')
 else
-    load('zx_specificity_mat.mat','vgat_arr','vgat_regions','value_labels');
+    load('zx_specificity_mat.mat','nphr_arr','nphr_regions','value_labels');
+    region_list=nphr_regions{1};
 end
-for task_idx=1:size(vgat_arr,1)
+for task_idx=1:size(value_arr,1)
     glm_mat=[];
     regions=cell(0,2);
-    for i=1:size(vgatLUT,1)
-        if ~isempty(vgatLUT{i,2})
-            opgen_reg=vgatLUT{i,1};
-            ephys_reg=vgatLUT{i,2};
-            if use_eff
-                opgen_idx=strcmp(ephys_reg,vgat_regions);
-            else
-                opgen_idx=strcmp(opgen_reg,vgat_regions{1});
-            end
-            ephys_idx=strcmp(ephys_reg,tca_coeff.rowheaders);
+    for i=1:size(translate,1)
+        if ~isempty(translate{i,2})
+            opgen_reg=translate{i,1};
+            ephys_reg=translate{i,2};
+            opgen_idx=strcmp(opgen_reg,region_list);
+            ephys_idx=strcmp(ephys_reg,features.rowheaders);
             
             if any(opgen_idx) && any(ephys_idx)
-                opgen=vgat_arr(task_idx,opgen_idx);
-                ephys=tca_coeff.data(ephys_idx,:);
+                opgen=value_arr(task_idx,opgen_idx);
+                ephys=features.data(ephys_idx,:);
                 glm_mat(end+1,:)=[opgen,ephys];
                 regions(end+1,:)={opgen_reg,ephys_reg};
             else
@@ -97,7 +91,7 @@ for task_idx=1:size(vgat_arr,1)
     p=p(1,2);
     suffix=value_labels{task_idx};
     if use_eff
-        suffix=['EFF+',suffix];
+        suffix=['EFF_',suffix];
     end
-    save(sprintf('GLM_TCA_vgat_%s.mat',suffix),'int_result','cv_results','r','p')
+    save(sprintf('GLM_selec_nphr_%s.mat',suffix),'int_result','cv_results','r','p')
 end
