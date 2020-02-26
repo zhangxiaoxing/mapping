@@ -53,9 +53,9 @@ for i=1:size(nphr_lut,1)
         opgen_idx=strcmp(opgen_reg,region_list);
         ephys_idx=strcmp(ephys_reg,features.rowheaders);
         
-        if any(opgen_idx) && any(ephys_idx)
+        if any(opgen_idx) && any(ephys_idx) && features.data(ephys_idx,1)>=50
             opgen=value_arr(task_idx,opgen_idx);
-            ephys=features.data(ephys_idx,:);
+            ephys=features.data(ephys_idx,2:end);
             glm_mat(end+1,:)=[opgen,ephys];
             regions(end+1,:)={opgen_reg,ephys_reg};
         else
@@ -154,6 +154,6 @@ if use_mean
 else
     suffix=['Median_',suffix];
 end
-save(sprintf('Ridge_select_feat_nphr_lambda_%0.3f_%s.mat',lambda,suffix),'int_result','cv_results','r','p','lambda')
+save(sprintf('Ridge_select_feat_nphr_lambda_%0.3f_%s.mat',lambda,suffix),'int_result','cv_results','r','p','lambda','regions')
 
 end

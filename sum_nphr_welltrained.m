@@ -89,7 +89,7 @@ function out=clearBadPerf(facSeq)
         i=80;
         while i<=length(facSeq)
             goodOff=nnz((facSeq(i-79:i,6)==5 | facSeq(i-79:i,6)==7)& facSeq(i-79:i,4)==0);
-            if goodOff>=nnz(facSeq(i-79:i,3)==0)*80/100
+            if goodOff>=nnz(facSeq(i-79:i,3)==0)*75/100
                 facSeq(i-79:i,8)=1;
             end
             i=i+1;
